@@ -295,7 +295,7 @@ document.addEventListener('DOMContentLoaded', function() {
             endTimeInput.value = formatTime(data.duration);
             
             // Create YouTube player
-            if (player) {
+            if (player && typeof player.destroy === 'function') {
                 player.destroy();
             }
             
