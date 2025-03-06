@@ -182,6 +182,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         setLoading(true);
+        showAlert('Processing download request...', 'info');
 
         const formData = new FormData(form);
 
@@ -192,11 +193,35 @@ document.addEventListener('DOMContentLoaded', function() {
             });
 
             if (!response.ok) {
-                const data = await response.json();
-                throw new Error(data.error || 'Download failed');
+                // Try to parse as JSON first for error messages
+                try {
+                    const data = await response.json();
+                    throw new Error(data.error || 'Download failed');
+                } catch (jsonError) {
+                    // If not JSON, use generic error
+                    throw new Error('Download failed: Server error');
+                }
             }
 
-            const data = await response.json();
+            // Handle as blob for file download
+            const blob = await response.blob();
+            const filename = response.headers.get('content-disposition')
+                ?.split('filename=')[1]?.replace(/"/g, '') || 'segment.mp4';
+            
+            // Create download link
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            
+            // Clean up
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            
+            showAlert('Download completed successfully!', 'success');
 
             if (data.file) {
                 // Create a download link and trigger it

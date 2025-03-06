@@ -83,11 +83,15 @@ def download():
             # Extract the filename from the output_file path
             filename = os.path.basename(output_file)
             
-            return send_file(
-                output_file,
-                as_attachment=True,
-                download_name=filename
-            )
+            try:
+                return send_file(
+                    output_file,
+                    as_attachment=True,
+                    download_name=filename
+                )
+            except Exception as e:
+                logger.error(f"Error sending file: {str(e)}")
+                return jsonify({'error': 'Failed to send file'}), 500
 
     except Exception as e:
         logger.error(f"Error processing download: {str(e)}")
