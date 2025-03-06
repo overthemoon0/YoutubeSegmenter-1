@@ -1,50 +1,47 @@
 import os
 import logging
-from pytube import YouTube
-from moviepy.editor import VideoFileClip
+import yt_dlp
 
 logger = logging.getLogger(__name__)
 
 def download_segment(url, start_seconds, end_seconds, format_type, temp_dir):
     try:
-        # Download YouTube video
-        yt = YouTube(url)
+        # Format the time strings for yt-dlp
+        time_range = f"{start_seconds}-{end_seconds}"
 
-        if format_type == 'mp3':
-            # For mp3, we download the audio stream
-            stream = yt.streams.filter(only_audio=True).first()
-        else:
-            # For avi, we download the highest quality video
-            stream = yt.streams.filter(progressive=True).get_highest_resolution()
+        # Configure yt-dlp options
+        ydl_opts = {
+            'format': 'bestaudio/best' if format_type == 'mp3' else 'best',
+            'outtmpl': os.path.join(temp_dir, 'output.%(ext)s'),
+            'download_ranges': lambda info: [[start_seconds, end_seconds]],
+            'postprocessors': [{
+                'key': 'FFmpegExtractAudio',
+                'preferredcodec': 'mp3',
+            }] if format_type == 'mp3' else [],
+            'force_keyframes_at_cuts': True,
+        }
 
-        if not stream:
-            raise Exception("No suitable stream found")
+        # Download the segment
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            ydl.download([url])
 
-        # Download the file
-        download_path = stream.download(output_path=temp_dir)
+        # Get the output file path
+        output_file = os.path.join(temp_dir, f'output.{format_type}')
 
-        # Load the video file
-        video = VideoFileClip(download_path)
+        if not os.path.exists(output_file):
+            # If mp3 wasn't found, try with .mp3 extension
+            if format_type == 'mp3':
+                output_file = os.path.join(temp_dir, 'output.mp3')
+            else:
+                # For video, might be mkv or mp4
+                for ext in ['mkv', 'mp4', 'webm']:
+                    test_file = os.path.join(temp_dir, f'output.{ext}')
+                    if os.path.exists(test_file):
+                        output_file = test_file
+                        break
 
-        # Cut the segment
-        video = video.subclip(start_seconds, end_seconds)
-
-        # Prepare output path
-        output_file = os.path.join(temp_dir, f"output.{format_type}")
-
-        if format_type == 'mp3':
-            # Extract audio and save as MP3
-            audio = video.audio
-            audio.write_audiofile(output_file)
-            audio.close()
-        else:
-            # Save as AVI
-            video.write_videofile(output_file, codec='rawvideo')
-
-        video.close()
-
-        # Remove the original downloaded file
-        os.remove(download_path)
+        if not os.path.exists(output_file):
+            raise Exception("Download failed - output file not found")
 
         return output_file
 

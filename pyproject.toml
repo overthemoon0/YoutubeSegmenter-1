@@ -9,10 +9,9 @@ dependencies = [
     "flask>=3.1.0",
     "flask-sqlalchemy>=3.1.1",
     "gunicorn>=23.0.0",
-    "imageio>=2.37.0",
-    "imageio-ffmpeg>=0.6.0",
     "moviepy>=2.1.2",
     "numpy>=2.2.3",
     "psycopg2-binary>=2.9.10",
     "pytube>=15.0.0",
+    "yt-dlp>=2025.2.19",
 ]
