@@ -27,3 +27,29 @@ input[type="text"][pattern] {
     font-family: monospace;
     letter-spacing: 1px;
 }
+
+/* Video timeline styling */
+#videoTimeline {
+    height: 10px;
+    margin: 2rem 0;
+}
+
+.noUi-connect {
+    background: var(--bs-primary);
+}
+
+.noUi-handle {
+    background: var(--bs-primary);
+    border: none;
+    box-shadow: none;
+    cursor: pointer;
+    border-radius: 50%;
+    width: 16px !important;
+    height: 16px !important;
+    right: -8px !important;
+}
+
+.noUi-handle::before,
+.noUi-handle::after {
+    display: none;
+}

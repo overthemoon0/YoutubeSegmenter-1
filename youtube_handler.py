@@ -6,19 +6,16 @@ logger = logging.getLogger(__name__)
 
 def download_segment(url, start_seconds, end_seconds, format_type, temp_dir):
     try:
-        # Format the time strings for yt-dlp
-        time_range = f"{start_seconds}-{end_seconds}"
-
         # Configure yt-dlp options
         ydl_opts = {
             'format': 'bestaudio/best' if format_type == 'mp3' else 'best',
             'outtmpl': os.path.join(temp_dir, 'output.%(ext)s'),
-            'download_ranges': lambda info: [[start_seconds, end_seconds]],
             'postprocessors': [{
                 'key': 'FFmpegExtractAudio',
                 'preferredcodec': 'mp3',
             }] if format_type == 'mp3' else [],
             'force_keyframes_at_cuts': True,
+            'download_ranges': lambda _: [[start_seconds, end_seconds]],
         }
 
         # Download the segment
