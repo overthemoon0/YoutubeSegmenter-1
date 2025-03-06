@@ -10,12 +10,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const startTimeInput = document.getElementById('start_time');
     const endTimeInput = document.getElementById('end_time');
     const timeSlider = document.getElementById('timeSlider');
-    const videoPlayer = document.getElementById('videoPlayer');
-    
-    let player;
-    let videoId;
-    let slider;
+
+    let player = null;
+    let videoId = null;
     let videoDurationSeconds = 0;
+    let youtubeApiReady = false;
 
     // Load YouTube API
     const tag = document.createElement('script');
@@ -23,33 +22,40 @@ document.addEventListener('DOMContentLoaded', function() {
     const firstScriptTag = document.getElementsByTagName('script')[0];
     firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
-    // Format seconds to MM:SS format
+    // Format seconds to HH:MM:SS.mmm format
     function formatTime(seconds) {
-        const mins = Math.floor(seconds / 60);
+        const hrs = Math.floor(seconds / 3600);
+        const mins = Math.floor((seconds % 3600) / 60);
         const secs = Math.floor(seconds % 60);
-        return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+        const ms = Math.floor((seconds % 1) * 1000);
+        return `${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}.${String(ms).padStart(3, '0')}`;
     }
 
     // Parse time string to seconds
     function parseTimeToSeconds(timeStr) {
-        const parts = timeStr.split(':');
-        let seconds = 0;
-        
-        if (parts.length === 3) { // HH:MM:SS
-            seconds = parseInt(parts[0]) * 3600 + parseInt(parts[1]) * 60 + parseInt(parts[2]);
-        } else if (parts.length === 2) { // MM:SS
-            seconds = parseInt(parts[0]) * 60 + parseInt(parts[1]);
-        } else if (parts.length === 1) { // SS
-            seconds = parseInt(parts[0]);
+        // Handle HH:MM:SS.mmm format
+        const match = timeStr.match(/^(\d+):(\d+):(\d+)(?:\.(\d+))?$/);
+        if (match) {
+            const hours = parseInt(match[1] || 0);
+            const minutes = parseInt(match[2] || 0);
+            const seconds = parseInt(match[3] || 0);
+            const milliseconds = parseInt(match[4] || 0) / 1000;
+            return hours * 3600 + minutes * 60 + seconds + milliseconds;
         }
-        
-        return seconds;
+
+        // Handle MM:SS format
+        const simpleParts = timeStr.split(':');
+        if (simpleParts.length === 2) {
+            return parseInt(simpleParts[0]) * 60 + parseInt(simpleParts[1]);
+        }
+
+        return 0;
     }
 
     // Initialize the time range slider
     function initSlider(duration) {
-        if (slider) {
-            slider.noUiSlider.destroy();
+        if (timeSlider.noUiSlider) {
+            timeSlider.noUiSlider.destroy();
         }
 
         noUiSlider.create(timeSlider, {
@@ -59,18 +65,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 'min': 0,
                 'max': duration
             },
-            step: 1,
+            step: 0.001,
             format: {
-                to: function (value) {
+                to: function(value) {
                     return formatTime(value);
                 },
-                from: function (value) {
+                from: function(value) {
                     return parseTimeToSeconds(value);
                 }
             }
         });
 
-        timeSlider.noUiSlider.on('update', function (values, handle) {
+        timeSlider.noUiSlider.on('update', function(values, handle) {
             if (handle === 0) {
                 startTimeInput.value = values[0];
             } else {
@@ -79,26 +85,69 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         // Connect inputs to slider
-        startTimeInput.addEventListener('change', function () {
+        startTimeInput.addEventListener('change', function() {
             const seconds = parseTimeToSeconds(this.value);
             timeSlider.noUiSlider.setHandle(0, seconds);
-            
-            if (player) {
+
+            if (player && typeof player.seekTo === 'function') {
                 player.seekTo(seconds);
             }
         });
 
-        endTimeInput.addEventListener('change', function () {
-            timeSlider.noUiSlider.setHandle(1, parseTimeToSeconds(this.value));
+        endTimeInput.addEventListener('change', function() {
+            const seconds = parseTimeToSeconds(this.value);
+            timeSlider.noUiSlider.setHandle(1, seconds);
         });
-
-        slider = timeSlider;
     }
 
     // YouTube Player API callback
     window.onYouTubeIframeAPIReady = function() {
-        // Player will be created when preview is clicked
+        youtubeApiReady = true;
     };
+
+    function createYouTubePlayer(videoId) {
+        // Clear previous player
+        const videoPlayerEl = document.getElementById('videoPlayer');
+        videoPlayerEl.innerHTML = '';
+
+        // Safe destroy
+        if (player && typeof player.destroy === 'function') {
+            try {
+                player.destroy();
+            } catch (e) {
+                console.error("Error destroying player:", e);
+            }
+        }
+
+        // Create new player
+        return new Promise((resolve, reject) => {
+            const checkApiAndCreate = () => {
+                if (youtubeApiReady) {
+                    try {
+                        player = new YT.Player('videoPlayer', {
+                            height: '100%',
+                            width: '100%',
+                            videoId: videoId,
+                            playerVars: {
+                                'playsinline': 1,
+                                'controls': 1,
+                                'rel': 0
+                            },
+                            events: {
+                                'onReady': () => resolve(player)
+                            }
+                        });
+                    } catch (e) {
+                        reject(e);
+                    }
+                } else {
+                    setTimeout(checkApiAndCreate, 100);
+                }
+            };
+
+            checkApiAndCreate();
+        });
+    }
 
     function showAlert(message, type = 'danger') {
         alertArea.innerHTML = `
@@ -114,7 +163,7 @@ document.addEventListener('DOMContentLoaded', function() {
         previewBtn.disabled = loading;
         progressBar.classList.toggle('d-none', !loading);
     }
-    
+
     // Extract YouTube video ID from URL
     function getYouTubeId(url) {
         const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
@@ -122,83 +171,10 @@ document.addEventListener('DOMContentLoaded', function() {
         return (match && match[2].length === 11) ? match[2] : null;
     }
 
-    function formatTime(seconds) {
-        const hrs = Math.floor(seconds / 3600);
-        const mins = Math.floor((seconds % 3600) / 60);
-        const secs = Math.floor(seconds % 60);
-        const ms = Math.floor((seconds % 1) * 1000);
-        return `${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}.${String(ms).padStart(3, '0')}`;
-    }
-
-    function initializeSlider(duration) {
-        if (slider) {
-            slider.destroy();
-        }
-
-        const timeline = document.getElementById('videoTimeline');
-        slider = noUiSlider.create(timeline, {
-            start: [0, duration],
-            connect: true,
-            range: {
-                'min': 0,
-                'max': duration
-            },
-            step: 0.001,
-            format: {
-                to: value => Math.round(value * 1000) / 1000,
-                from: value => value
-            }
-        });
-
-        slider.on('update', function(values) {
-            startTimeInput.value = formatTime(values[0]);
-            endTimeInput.value = formatTime(values[1]);
-        });
-    }
-
-    previewBtn.addEventListener('click', async function() {
-        const urlInput = document.getElementById('url');
-        if (!urlInput.value) {
-            showAlert('Please enter a YouTube URL');
-            return;
-        }
-
-        setLoading(true);
-
-        try {
-            const formData = new FormData();
-            formData.append('url', urlInput.value);
-
-            const response = await fetch('/preview', {
-                method: 'POST',
-                body: formData
-            });
-
-            if (!response.ok) {
-                const data = await response.json();
-                throw new Error(data.error || 'Failed to get video preview');
-            }
-
-            const data = await response.json();
-            videoTitle.textContent = data.title;
-            videoDuration.textContent = `Duration: ${formatTime(data.duration)}`;
-            previewContainer.classList.remove('d-none');
-            initializeSlider(data.duration);
-
-        } catch (error) {
-            showAlert(error.message);
-        } finally {
-            setLoading(false);
-        }
-    });
-
+    // Form submission handler
     form.addEventListener('submit', async function(e) {
         e.preventDefault();
 
-        // Clear previous alerts
-        alertArea.innerHTML = '';
-
-        // Form validation
         if (!form.checkValidity()) {
             e.stopPropagation();
             form.classList.add('was-validated');
@@ -217,27 +193,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (!response.ok) {
                 const data = await response.json();
-                throw new Error(data.error || 'Failed to download video segment');
+                throw new Error(data.error || 'Download failed');
             }
 
-            // Get filename from response headers if available
-            const contentDisposition = response.headers.get('content-disposition');
-            const fileName = contentDisposition
-                ? contentDisposition.split('filename=')[1].replace(/"/g, '')
-                : 'video_segment';
+            const data = await response.json();
 
-            // Create a blob from the response
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-
-            // Create temporary link and trigger download
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = fileName;
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(url);
-            a.remove();
+            if (data.file) {
+                // Create a download link and trigger it
+                const link = document.createElement('a');
+                link.href = data.file;
+                link.download = data.filename || 'segment';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
 
             showAlert('Download completed successfully!', 'success');
         } catch (error) {
@@ -246,74 +215,64 @@ document.addEventListener('DOMContentLoaded', function() {
             setLoading(false);
         }
     });
-    
+
     // Preview button click handler
     previewBtn.addEventListener('click', async function() {
         const urlInput = document.getElementById('url');
         const url = urlInput.value.trim();
-        
+
         if (!url) {
             showAlert('Please enter a YouTube URL');
             return;
         }
-        
+
         setLoading(true);
-        
+
         try {
             // Get video ID
-            videoId = getYouTubeId(url);
-            if (!videoId) {
+            const newVideoId = getYouTubeId(url);
+            if (!newVideoId) {
                 throw new Error('Invalid YouTube URL');
             }
-            
+
+            videoId = newVideoId;
+
             // Get video info from our API
             const formData = new FormData();
             formData.append('url', url);
-            
+
             const response = await fetch('/preview', {
                 method: 'POST',
                 body: formData
             });
-            
+
             if (!response.ok) {
                 const data = await response.json();
                 throw new Error(data.error || 'Failed to fetch video preview');
             }
-            
+
             const data = await response.json();
-            
+
             // Update UI with video details
             videoTitle.textContent = data.title;
             videoDurationSeconds = data.duration;
             videoDuration.textContent = `Duration: ${formatTime(data.duration)}`;
-            
+
             // Initialize the slider
             initSlider(data.duration);
-            
+
             // Set start and end times
             startTimeInput.value = formatTime(0);
             endTimeInput.value = formatTime(data.duration);
-            
+
             // Create YouTube player
-            if (player && typeof player.destroy === 'function') {
-                player.destroy();
-            }
-            
-            player = new YT.Player('videoPlayer', {
-                height: '100%',
-                width: '100%',
-                videoId: videoId,
-                playerVars: {
-                    'playsinline': 1,
-                    'controls': 1,
-                    'rel': 0
-                }
-            });
-            
+            await createYouTubePlayer(videoId);
+
             // Show the preview container
             previewContainer.classList.remove('d-none');
-            
+
         } catch (error) {
+            console.error("Preview error:", error);
             showAlert(error.message);
         } finally {
             setLoading(false);
