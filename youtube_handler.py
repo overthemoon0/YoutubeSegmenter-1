@@ -15,7 +15,7 @@ def download_segment(url, start_seconds, end_seconds, format_type, temp_dir):
                 'preferredcodec': 'mp3',
             }] if format_type == 'mp3' else [],
             'force_keyframes_at_cuts': True,
-            'download_ranges': lambda _, __: [[start_seconds, end_seconds]],
+            'download_ranges': lambda _, __: [(start_seconds, end_seconds)],
         }
 
         # Download the segment
