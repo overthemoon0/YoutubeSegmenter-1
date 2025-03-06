@@ -1,0 +1,29 @@
+/* Additional custom styles */
+.card {
+    border-radius: 1rem;
+    border: 1px solid var(--bs-border-color);
+}
+
+.progress {
+    height: 25px;
+}
+
+.btn-primary {
+    padding: 0.75rem;
+}
+
+/* Input focus styles */
+.form-control:focus {
+    box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);
+}
+
+/* Custom alert spacing */
+.alert {
+    margin-bottom: 0;
+}
+
+/* Time input styling */
+input[type="text"][pattern] {
+    font-family: monospace;
+    letter-spacing: 1px;
+}
