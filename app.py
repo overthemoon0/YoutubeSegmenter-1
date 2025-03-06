@@ -84,10 +84,16 @@ def download():
             filename = os.path.basename(output_file)
             
             try:
+                # Use ASCII-only filename to avoid encoding issues
+                download_name = os.path.basename(output_file)
+                # Ensure ASCII-only characters in the filename
+                import re
+                download_name = re.sub(r'[^\x00-\x7F]', '_', download_name)
+                
                 return send_file(
                     output_file,
                     as_attachment=True,
-                    download_name=filename
+                    download_name=download_name
                 )
             except Exception as e:
                 logger.error(f"Error sending file: {str(e)}")

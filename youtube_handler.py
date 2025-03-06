@@ -21,13 +21,15 @@ def download_segment(url, start_seconds, end_seconds, format_type, temp_dir):
         if len(video_title) > 40:
             video_title = video_title[:37] + "..."
             
-        # Clean filename - remove invalid characters
-        video_title = "".join(c for c in video_title if c.isalnum() or c in ' ._-').strip()
+        # Clean filename - replace problematic characters with underscore
+        import re
+        video_title = re.sub(r'[^\w\s.-]', '_', video_title)
+        video_title = video_title.strip()
         if not video_title:
             video_title = 'video'
             
         # Create final filename with video ID and time range
-        filename_base = f"{video_title}_{video_id}_{time_range}"
+        filename_base = f"{video_id}_{time_range}"
             
         # Configure yt-dlp options
         ydl_opts = {
