@@ -53,3 +53,48 @@ input[type="text"][pattern] {
 .noUi-handle::after {
     display: none;
 }
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.container {
+  flex: 1;
+}
+
+.noUi-connect {
+  background: #0d6efd;
+}
+
+#timeSlider {
+  height: 15px;
+  margin: 20px 0;
+}
+
+.noUi-handle {
+  border-radius: 50%;
+  background-color: #0d6efd;
+  box-shadow: none;
+  cursor: pointer;
+}
+
+.noUi-handle:after,
+.noUi-handle:before {
+  display: none;
+}
+
+.form-control:focus,
+.btn:focus {
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+#videoPlayer {
+  width: 100%;
+  height: 100%;
+  background-color: #000;
+}
+
+.card {
+  overflow: hidden;
+}

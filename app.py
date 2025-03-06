@@ -80,10 +80,13 @@ def download():
             if not output_file:
                 return jsonify({'error': 'Failed to download video'}), 400
 
+            # Extract the filename from the output_file path
+            filename = os.path.basename(output_file)
+            
             return send_file(
                 output_file,
                 as_attachment=True,
-                download_name=f"video_segment.{format_type}"
+                download_name=filename
             )
 
     except Exception as e:
