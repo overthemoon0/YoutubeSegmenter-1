@@ -180,14 +180,10 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
     }
 
-    // Update the setLoading function to show more detailed progress
-    function setLoading(loading, message = 'Processing...') {
+    function setLoading(loading) {
         downloadBtn.disabled = loading;
         previewBtn.disabled = loading;
         progressBar.classList.toggle('d-none', !loading);
-        if (loading) {
-            progressBar.querySelector('.progress-bar').textContent = message;
-        }
     }
 
     function getYouTubeId(url) {
@@ -214,14 +210,13 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        setLoading(true, 'Starting download...');
+        setLoading(true);
         showAlert('Processing download request...', 'info');
 
         const formData = new FormData(form);
         formData.append('title', currentVideoTitle);  // Add video title to form data
 
         try {
-            setLoading(true, 'Downloading and processing video segment...');
             const response = await fetch('/download', {
                 method: 'POST',
                 body: formData
@@ -232,7 +227,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 throw new Error(data.error || 'Download failed');
             }
 
-            setLoading(true, 'Preparing file for download...');
             const blob = await response.blob();
             const format = formData.get('format');
             const sanitizedTitle = sanitizeFilename(currentVideoTitle);
