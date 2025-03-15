@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let videoId = null;
     let videoDurationSeconds = 0;
     let youtubeApiReady = false;
+    let currentVideoTitle = '';
 
     // Load YouTube API
     const tag = document.createElement('script');
@@ -88,6 +89,23 @@ document.addEventListener('DOMContentLoaded', function() {
             showAlert('Error initializing time slider. Please try again.');
         }
     }
+
+    // Handle time adjustment buttons
+    document.querySelectorAll('[data-time-adjust]').forEach(button => {
+        button.addEventListener('click', function() {
+            const type = this.dataset.timeAdjust; // 'start' or 'end'
+            const direction = this.dataset.direction; // 'up' or 'down'
+            const handle = type === 'start' ? 0 : 1;
+
+            const currentValue = parseTimeToSeconds(timeSlider.noUiSlider.get()[handle]);
+            const adjustment = direction === 'up' ? 1 : -1;
+            const newValue = Math.max(0, Math.min(videoDurationSeconds, currentValue + adjustment));
+
+            const values = [...timeSlider.noUiSlider.get()];
+            values[handle] = formatTime(newValue);
+            timeSlider.noUiSlider.set(values);
+        });
+    });
 
     // YouTube Player API callback
     window.onYouTubeIframeAPIReady = function() {
@@ -174,6 +192,14 @@ document.addEventListener('DOMContentLoaded', function() {
         return (match && match[2].length === 11) ? match[2] : null;
     }
 
+    // Sanitize filename
+    function sanitizeFilename(filename) {
+        return filename
+            .replace(/[<>:"/\\|?*]+/g, '_')  // Replace invalid characters
+            .replace(/\s+/g, '_')            // Replace spaces with underscores
+            .slice(0, 200);                  // Limit length
+    }
+
     // Form submission handler
     form.addEventListener('submit', async function(e) {
         e.preventDefault();
@@ -188,6 +214,7 @@ document.addEventListener('DOMContentLoaded', function() {
         showAlert('Processing download request...', 'info');
 
         const formData = new FormData(form);
+        formData.append('title', currentVideoTitle);  // Add video title to form data
 
         try {
             const response = await fetch('/download', {
@@ -201,8 +228,11 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             const blob = await response.blob();
-            const filename = response.headers.get('content-disposition')
-                ?.split('filename=')[1]?.replace(/"/g, '') || 'segment.mp4';
+            const format = formData.get('format');
+            const sanitizedTitle = sanitizeFilename(currentVideoTitle);
+            const startTime = startTimeInput.value.replace(/:/g, '-');
+            const endTime = endTimeInput.value.replace(/:/g, '-');
+            const filename = `${sanitizedTitle}_${startTime}_${endTime}.${format}`;
 
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -258,6 +288,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const data = await response.json();
 
+            currentVideoTitle = data.title;  // Store the video title
             videoTitle.textContent = data.title;
             videoDurationSeconds = data.duration;
             videoDuration.textContent = `Duration: ${formatTime(data.duration)}`;

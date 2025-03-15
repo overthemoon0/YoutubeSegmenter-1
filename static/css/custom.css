@@ -73,6 +73,21 @@
     font-size: 0.9rem;
 }
 
+/* Time adjustment buttons */
+[data-time-adjust] {
+    min-width: 24px;
+    padding: 2px !important;
+}
+
+[data-time-adjust] i {
+    font-size: 12px;
+}
+
+.btn-group-vertical > .btn {
+    border-radius: 4px !important;
+    margin: 1px 0;
+}
+
 /* Time input styling */
 input[type="text"][pattern] {
     font-family: monospace;
