@@ -43,42 +43,50 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initialize the time range slider
     function initSlider(duration) {
-        if (timeSlider.noUiSlider) {
-            timeSlider.noUiSlider.destroy();
-        }
+        console.log('Initializing slider with duration:', duration);
+        try {
+            if (timeSlider.noUiSlider) {
+                timeSlider.noUiSlider.destroy();
+            }
 
-        noUiSlider.create(timeSlider, {
-            start: [0, duration],
-            connect: true,
-            range: {
-                'min': 0,
-                'max': duration
-            },
-            step: 1,
-            format: {
-                to: function(value) {
-                    return formatTime(value);
+            noUiSlider.create(timeSlider, {
+                start: [0, duration],
+                connect: true,
+                range: {
+                    'min': 0,
+                    'max': duration
                 },
-                from: function(value) {
-                    return parseTimeToSeconds(value);
+                step: 1,
+                format: {
+                    to: function(value) {
+                        return formatTime(Math.round(value));
+                    },
+                    from: function(value) {
+                        return parseTimeToSeconds(value);
+                    }
                 }
-            }
-        });
+            });
 
-        // Update inputs and displays when slider changes
-        timeSlider.noUiSlider.on('update', function(values, handle) {
-            const time = parseTimeToSeconds(values[handle]);
-            if (handle === 0) {
-                startTimeInput.value = formatTime(time);
-                startTimeDisplay.textContent = formatTime(time);
-                if (player && player.seekTo) {
-                    player.seekTo(time);
+            // Update inputs and displays when slider changes
+            timeSlider.noUiSlider.on('update', function(values, handle) {
+                const time = parseTimeToSeconds(values[handle]);
+                if (handle === 0) {
+                    startTimeInput.value = formatTime(time);
+                    startTimeDisplay.textContent = formatTime(time);
+                    if (player && player.seekTo) {
+                        player.seekTo(time);
+                    }
+                } else {
+                    endTimeInput.value = formatTime(time);
+                    endTimeDisplay.textContent = formatTime(time);
                 }
-            } else {
-                endTimeInput.value = formatTime(time);
-                endTimeDisplay.textContent = formatTime(time);
-            }
-        });
+            });
+
+            console.log('Slider initialized successfully');
+        } catch (error) {
+            console.error('Error initializing slider:', error);
+            showAlert('Error initializing time slider. Please try again.');
+        }
     }
 
     // YouTube Player API callback

@@ -23,13 +23,16 @@
 }
 
 /* Video timeline styling */
-.noUi-connect {
-    background: #0d6efd;
-}
-
 #timeSlider {
     height: 15px;
     margin: 20px 0;
+    background: var(--bs-border-color);
+    border-radius: 8px;
+}
+
+.noUi-connect {
+    background: #0d6efd;
+    border-radius: 8px;
 }
 
 .noUi-handle {
@@ -41,7 +44,7 @@
     height: 20px !important;
     right: -10px !important;
     top: -3px !important;
-    border: none !important;
+    border: 2px solid #ffffff !important;
 }
 
 .noUi-handle:after,
