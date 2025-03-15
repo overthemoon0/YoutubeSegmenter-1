@@ -9,6 +9,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const videoDuration = document.getElementById('videoDuration');
     const startTimeInput = document.getElementById('start_time');
     const endTimeInput = document.getElementById('end_time');
+    const startTimeDisplay = document.getElementById('startTimeDisplay');
+    const endTimeDisplay = document.getElementById('endTimeDisplay');
     const timeSlider = document.getElementById('timeSlider');
 
     let player = null;
@@ -22,33 +24,20 @@ document.addEventListener('DOMContentLoaded', function() {
     const firstScriptTag = document.getElementsByTagName('script')[0];
     firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
-    // Format seconds to HH:MM:SS.mmm format
+    // Format seconds to HH:MM:SS format
     function formatTime(seconds) {
         const hrs = Math.floor(seconds / 3600);
         const mins = Math.floor((seconds % 3600) / 60);
         const secs = Math.floor(seconds % 60);
-        const ms = Math.floor((seconds % 1) * 1000);
-        return `${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}.${String(ms).padStart(3, '0')}`;
+        return `${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
     }
 
     // Parse time string to seconds
     function parseTimeToSeconds(timeStr) {
-        // Handle HH:MM:SS.mmm format
-        const match = timeStr.match(/^(\d+):(\d+):(\d+)(?:\.(\d+))?$/);
-        if (match) {
-            const hours = parseInt(match[1] || 0);
-            const minutes = parseInt(match[2] || 0);
-            const seconds = parseInt(match[3] || 0);
-            const milliseconds = parseInt(match[4] || 0) / 1000;
-            return hours * 3600 + minutes * 60 + seconds + milliseconds;
+        const parts = timeStr.split(':').map(Number);
+        if (parts.length === 3) {
+            return parts[0] * 3600 + parts[1] * 60 + parts[2];
         }
-
-        // Handle MM:SS format
-        const simpleParts = timeStr.split(':');
-        if (simpleParts.length === 2) {
-            return parseInt(simpleParts[0]) * 60 + parseInt(simpleParts[1]);
-        }
-
         return 0;
     }
 
@@ -65,7 +54,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 'min': 0,
                 'max': duration
             },
-            step: 0.001,
+            step: 1,
             format: {
                 to: function(value) {
                     return formatTime(value);
@@ -76,27 +65,19 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
+        // Update inputs and displays when slider changes
         timeSlider.noUiSlider.on('update', function(values, handle) {
+            const time = parseTimeToSeconds(values[handle]);
             if (handle === 0) {
-                startTimeInput.value = values[0];
+                startTimeInput.value = formatTime(time);
+                startTimeDisplay.textContent = formatTime(time);
+                if (player && player.seekTo) {
+                    player.seekTo(time);
+                }
             } else {
-                endTimeInput.value = values[1];
+                endTimeInput.value = formatTime(time);
+                endTimeDisplay.textContent = formatTime(time);
             }
-        });
-
-        // Connect inputs to slider
-        startTimeInput.addEventListener('change', function() {
-            const seconds = parseTimeToSeconds(this.value);
-            timeSlider.noUiSlider.setHandle(0, seconds);
-
-            if (player && typeof player.seekTo === 'function') {
-                player.seekTo(seconds);
-            }
-        });
-
-        endTimeInput.addEventListener('change', function() {
-            const seconds = parseTimeToSeconds(this.value);
-            timeSlider.noUiSlider.setHandle(1, seconds);
         });
     }
 
@@ -106,11 +87,9 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     function createYouTubePlayer(videoId) {
-        // Clear previous player
         const videoPlayerEl = document.getElementById('videoPlayer');
         videoPlayerEl.innerHTML = '';
 
-        // Safe destroy
         if (player && typeof player.destroy === 'function') {
             try {
                 player.destroy();
@@ -119,7 +98,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
-        // Create new player
         return new Promise((resolve, reject) => {
             const checkApiAndCreate = () => {
                 if (youtubeApiReady) {
@@ -134,7 +112,25 @@ document.addEventListener('DOMContentLoaded', function() {
                                 'rel': 0
                             },
                             events: {
-                                'onReady': () => resolve(player)
+                                'onReady': () => resolve(player),
+                                'onStateChange': (event) => {
+                                    // Update slider position when video is playing
+                                    if (event.data === YT.PlayerState.PLAYING) {
+                                        const updateSliderPosition = () => {
+                                            if (player && player.getCurrentTime) {
+                                                const currentTime = player.getCurrentTime();
+                                                const startTime = parseTimeToSeconds(startTimeInput.value);
+                                                if (currentTime < startTime || currentTime > parseTimeToSeconds(endTimeInput.value)) {
+                                                    player.seekTo(startTime);
+                                                }
+                                            }
+                                            if (player && player.getPlayerState() === YT.PlayerState.PLAYING) {
+                                                requestAnimationFrame(updateSliderPosition);
+                                            }
+                                        };
+                                        updateSliderPosition();
+                                    }
+                                }
                             }
                         });
                     } catch (e) {
@@ -164,7 +160,6 @@ document.addEventListener('DOMContentLoaded', function() {
         progressBar.classList.toggle('d-none', !loading);
     }
 
-    // Extract YouTube video ID from URL
     function getYouTubeId(url) {
         const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
         const match = url.match(regExp);
@@ -193,22 +188,14 @@ document.addEventListener('DOMContentLoaded', function() {
             });
 
             if (!response.ok) {
-                // Try to parse as JSON first for error messages
-                try {
-                    const data = await response.json();
-                    throw new Error(data.error || 'Download failed');
-                } catch (jsonError) {
-                    // If not JSON, use generic error
-                    throw new Error('Download failed: Server error');
-                }
+                const data = await response.json();
+                throw new Error(data.error || 'Download failed');
             }
 
-            // Handle as blob for file download
             const blob = await response.blob();
             const filename = response.headers.get('content-disposition')
                 ?.split('filename=')[1]?.replace(/"/g, '') || 'segment.mp4';
-            
-            // Create download link
+
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.style.display = 'none';
@@ -216,22 +203,9 @@ document.addEventListener('DOMContentLoaded', function() {
             a.download = filename;
             document.body.appendChild(a);
             a.click();
-            
-            // Clean up
+
             window.URL.revokeObjectURL(url);
             document.body.removeChild(a);
-            
-            showAlert('Download completed successfully!', 'success');
-
-            if (data.file) {
-                // Create a download link and trigger it
-                const link = document.createElement('a');
-                link.href = data.file;
-                link.download = data.filename || 'segment';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            }
 
             showAlert('Download completed successfully!', 'success');
         } catch (error) {
@@ -254,7 +228,6 @@ document.addEventListener('DOMContentLoaded', function() {
         setLoading(true);
 
         try {
-            // Get video ID
             const newVideoId = getYouTubeId(url);
             if (!newVideoId) {
                 throw new Error('Invalid YouTube URL');
@@ -262,7 +235,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
             videoId = newVideoId;
 
-            // Get video info from our API
             const formData = new FormData();
             formData.append('url', url);
 
@@ -278,22 +250,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const data = await response.json();
 
-            // Update UI with video details
             videoTitle.textContent = data.title;
             videoDurationSeconds = data.duration;
             videoDuration.textContent = `Duration: ${formatTime(data.duration)}`;
 
-            // Initialize the slider
             initSlider(data.duration);
 
-            // Set start and end times
             startTimeInput.value = formatTime(0);
             endTimeInput.value = formatTime(data.duration);
+            startTimeDisplay.textContent = formatTime(0);
+            endTimeDisplay.textContent = formatTime(data.duration);
 
-            // Create YouTube player
             await createYouTubePlayer(videoId);
 
-            // Show the preview container
             previewContainer.classList.remove('d-none');
 
         } catch (error) {

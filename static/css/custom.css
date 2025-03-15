@@ -22,37 +22,60 @@
     margin-bottom: 0;
 }
 
+/* Video timeline styling */
+.noUi-connect {
+    background: #0d6efd;
+}
+
+#timeSlider {
+    height: 15px;
+    margin: 20px 0;
+}
+
+.noUi-handle {
+    border-radius: 50%;
+    background-color: #0d6efd;
+    box-shadow: none;
+    cursor: pointer;
+    width: 20px !important;
+    height: 20px !important;
+    right: -10px !important;
+    top: -3px !important;
+    border: none !important;
+}
+
+.noUi-handle:after,
+.noUi-handle:before {
+    display: none;
+}
+
+.form-control:focus,
+.btn:focus {
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+#videoPlayer {
+    width: 100%;
+    height: 100%;
+    background-color: #000;
+}
+
+.card {
+    overflow: hidden;
+}
+
+#startTimeDisplay,
+#endTimeDisplay {
+    font-family: monospace;
+    font-size: 0.9rem;
+}
+
 /* Time input styling */
 input[type="text"][pattern] {
     font-family: monospace;
     letter-spacing: 1px;
 }
 
-/* Video timeline styling */
-#videoTimeline {
-    height: 10px;
-    margin: 2rem 0;
-}
-
-.noUi-connect {
-    background: var(--bs-primary);
-}
-
-.noUi-handle {
-    background: var(--bs-primary);
-    border: none;
-    box-shadow: none;
-    cursor: pointer;
-    border-radius: 50%;
-    width: 16px !important;
-    height: 16px !important;
-    right: -8px !important;
-}
-
-.noUi-handle::before,
-.noUi-handle::after {
-    display: none;
-}
 body {
   min-height: 100vh;
   display: flex;
@@ -61,40 +84,4 @@ body {
 
 .container {
   flex: 1;
-}
-
-.noUi-connect {
-  background: #0d6efd;
-}
-
-#timeSlider {
-  height: 15px;
-  margin: 20px 0;
-}
-
-.noUi-handle {
-  border-radius: 50%;
-  background-color: #0d6efd;
-  box-shadow: none;
-  cursor: pointer;
-}
-
-.noUi-handle:after,
-.noUi-handle:before {
-  display: none;
-}
-
-.form-control:focus,
-.btn:focus {
-  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
-}
-
-#videoPlayer {
-  width: 100%;
-  height: 100%;
-  background-color: #000;
-}
-
-.card {
-  overflow: hidden;
 }
