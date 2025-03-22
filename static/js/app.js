@@ -30,14 +30,18 @@ document.addEventListener('DOMContentLoaded', function() {
         const hrs = Math.floor(seconds / 3600);
         const mins = Math.floor((seconds % 3600) / 60);
         const secs = Math.floor(seconds % 60);
-        return `${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        const ms = Math.round((seconds % 1) * 10) / 10; // Round to 1 decimal place
+        const secStr = ms === 0 ? String(secs).padStart(2, '0') : 
+                      (secs + ms).toFixed(1).padStart(4, '0');
+        return `${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${secStr}`;
     }
 
     // Parse time string to seconds
     function parseTimeToSeconds(timeStr) {
         const parts = timeStr.split(':').map(Number);
         if (parts.length === 3) {
-            return parts[0] * 3600 + parts[1] * 60 + parts[2];
+            const [hrs, mins, secs] = parts;
+            return hrs * 3600 + mins * 60 + secs;
         }
         return 0;
     }
@@ -57,10 +61,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     'min': 0,
                     'max': duration
                 },
-                step: 1,
+                step: 0.5, // Changed to support half-second increments
                 format: {
                     to: function(value) {
-                        return formatTime(Math.round(value));
+                        return formatTime(value);
                     },
                     from: function(value) {
                         return parseTimeToSeconds(value);
@@ -98,7 +102,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const handle = type === 'start' ? 0 : 1;
 
             const currentValue = parseTimeToSeconds(timeSlider.noUiSlider.get()[handle]);
-            const adjustment = direction === 'up' ? 0.5 : -0.5; // Changed to 0.5 second increments
+            const adjustment = direction === 'up' ? 0.5 : -0.5; // Half-second increments
             const newValue = Math.max(0, Math.min(videoDurationSeconds, currentValue + adjustment));
 
             const values = [...timeSlider.noUiSlider.get()];
