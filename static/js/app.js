@@ -98,7 +98,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const handle = type === 'start' ? 0 : 1;
 
             const currentValue = parseTimeToSeconds(timeSlider.noUiSlider.get()[handle]);
-            const adjustment = direction === 'up' ? 1 : -1;
+            const adjustment = direction === 'up' ? 0.5 : -0.5; // Changed to 0.5 second increments
             const newValue = Math.max(0, Math.min(videoDurationSeconds, currentValue + adjustment));
 
             const values = [...timeSlider.noUiSlider.get()];
@@ -145,8 +145,17 @@ document.addEventListener('DOMContentLoaded', function() {
                                         const updateSliderPosition = () => {
                                             if (player && player.getCurrentTime) {
                                                 const currentTime = player.getCurrentTime();
+                                                const endTime = parseTimeToSeconds(endTimeInput.value);
+
+                                                // Stop the video when it reaches the end time
+                                                if (currentTime >= endTime) {
+                                                    player.pauseVideo();
+                                                    return;
+                                                }
+
+                                                // Keep video within selected segment
                                                 const startTime = parseTimeToSeconds(startTimeInput.value);
-                                                if (currentTime < startTime || currentTime > parseTimeToSeconds(endTimeInput.value)) {
+                                                if (currentTime < startTime) {
                                                     player.seekTo(startTime);
                                                 }
                                             }
