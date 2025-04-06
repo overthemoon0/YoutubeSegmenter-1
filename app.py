@@ -23,9 +23,13 @@ def preview():
         if not url:
             return jsonify({'error': 'Missing URL'}), 400
 
+        # Use more permissive format specification to avoid format errors
         ydl_opts = {
-            'format': 'best',
+            'format': 'best[ext=mp4]/best',
             'quiet': True,
+            'no_warnings': True,
+            'format_sort': ['res', 'ext:mp4:m4a'],
+            'format_sort_force': False,
         }
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:

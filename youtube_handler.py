@@ -28,12 +28,12 @@ def download_segment(url, start_seconds, end_seconds, format_type, temp_dir):
         if not video_title:
             video_title = 'video'
             
-        # Create final filename with video ID and time range
-        filename_base = f"{video_id}_{time_range}"
+        # Create final filename with video ID and time range and add title
+        filename_base = f"{video_title}_{video_id}_{time_range}"
             
-        # Configure yt-dlp options
+        # Configure yt-dlp options - use more compatible format settings
         ydl_opts = {
-            'format': 'bestaudio/best' if format_type == 'mp3' else 'best',
+            'format': 'bestaudio[ext=m4a]/bestaudio/best' if format_type == 'mp3' else 'best[ext=mp4]/best',
             'outtmpl': os.path.join(temp_dir, f'{filename_base}.%(ext)s'),
             'postprocessors': [{
                 'key': 'FFmpegExtractAudio',

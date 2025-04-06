@@ -90,7 +90,7 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('Slider initialized successfully');
         } catch (error) {
             console.error('Error initializing slider:', error);
-            showAlert('Error initializing time slider. Please try again.');
+            showAlert('Ошибка инициализации слайдера времени. Пожалуйста, попробуйте снова.');
         }
     }
 
@@ -108,6 +108,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const values = [...timeSlider.noUiSlider.get()];
             values[handle] = formatTime(newValue);
             timeSlider.noUiSlider.set(values);
+            
+            // If this is the start time and player is initialized, seek to that position
+            if (type === 'start' && player && player.seekTo) {
+                player.seekTo(newValue);
+            }
         });
     });
 
@@ -224,7 +229,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         setLoading(true);
-        showAlert('Processing download request...', 'info');
+        showAlert('Обработка запроса на загрузку...', 'info');
 
         const formData = new FormData(form);
         formData.append('title', currentVideoTitle);  // Add video title to form data
@@ -237,7 +242,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (!response.ok) {
                 const data = await response.json();
-                throw new Error(data.error || 'Download failed');
+                throw new Error(data.error || 'Ошибка загрузки');
             }
 
             const blob = await response.blob();
@@ -258,7 +263,7 @@ document.addEventListener('DOMContentLoaded', function() {
             window.URL.revokeObjectURL(url);
             document.body.removeChild(a);
 
-            showAlert('Download completed successfully!', 'success');
+            showAlert('Загрузка успешно завершена!', 'success');
         } catch (error) {
             showAlert(error.message);
         } finally {
@@ -272,7 +277,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const url = urlInput.value.trim();
 
         if (!url) {
-            showAlert('Please enter a YouTube URL');
+            showAlert('Пожалуйста, введите URL видео YouTube');
             return;
         }
 
@@ -281,7 +286,7 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             const newVideoId = getYouTubeId(url);
             if (!newVideoId) {
-                throw new Error('Invalid YouTube URL');
+                throw new Error('Некорректный URL YouTube');
             }
 
             videoId = newVideoId;
@@ -296,7 +301,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (!response.ok) {
                 const data = await response.json();
-                throw new Error(data.error || 'Failed to fetch video preview');
+                throw new Error(data.error || 'Не удалось получить превью видео');
             }
 
             const data = await response.json();
@@ -304,7 +309,7 @@ document.addEventListener('DOMContentLoaded', function() {
             currentVideoTitle = data.title;  // Store the video title
             videoTitle.textContent = data.title;
             videoDurationSeconds = data.duration;
-            videoDuration.textContent = `Duration: ${formatTime(data.duration)}`;
+            videoDuration.textContent = `Длительность: ${formatTime(data.duration)}`;
 
             initSlider(data.duration);
 
