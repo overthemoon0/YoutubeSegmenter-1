@@ -23,20 +23,25 @@ def preview():
         if not url:
             return jsonify({'error': 'Missing URL'}), 400
 
-        # Use the most basic configuration without format constraints
         ydl_opts = {
             'quiet': True,
             'no_warnings': True,
-            # Don't specify any format to avoid format errors
+            'extract_flat': True,
+            'skip_download': True,
+            'format': 'best'
         }
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(url, download=False)
-            return jsonify({
-                'title': info.get('title', ''),
-                'duration': info.get('duration', 0),
-                'thumbnail': info.get('thumbnail', '')
-            })
+            try:
+                info = ydl.extract_info(url, download=False)
+                return jsonify({
+                    'title': info.get('title', ''),
+                    'duration': info.get('duration', 0),
+                    'thumbnail': info.get('thumbnail', '')
+                })
+            except Exception as e:
+                logger.error(f"YouTube extraction error: {str(e)}")
+                return jsonify({'error': 'Could not extract video information'}), 400
 
     except Exception as e:
         logger.error(f"Error getting video preview: {str(e)}")
