@@ -31,19 +31,32 @@ def download_segment(url, start_seconds, end_seconds, format_type, temp_dir):
         # Create final filename with video ID and time range and add title
         filename_base = f"{video_title}_{video_id}_{time_range}"
             
-        # Configure yt-dlp options - use more compatible format settings
-        ydl_opts = {
-            'format': 'bestaudio[ext=m4a]/bestaudio/best' if format_type == 'mp3' else 'best[ext=mp4]/best',
-            'outtmpl': os.path.join(temp_dir, f'{filename_base}.%(ext)s'),
-            'postprocessors': [{
-                'key': 'FFmpegExtractAudio',
-                'preferredcodec': 'mp3',
-            }] if format_type == 'mp3' else [],
-            'force_keyframes_at_cuts': True,
-            'download_ranges': lambda info, __: [{"start_time": start_seconds, "end_time": end_seconds}],
-            'quiet': True,  # Reduce logging
-            'no_warnings': True,  # Reduce warnings
-        }
+        # Configure yt-dlp options without format restrictions
+        if format_type == 'mp3':
+            ydl_opts = {
+                # Don't filter by format for audio to avoid format errors
+                'format': 'bestaudio/best',
+                'outtmpl': os.path.join(temp_dir, f'{filename_base}.%(ext)s'),
+                'postprocessors': [{
+                    'key': 'FFmpegExtractAudio',
+                    'preferredcodec': 'mp3',
+                    'preferredquality': '192',
+                }],
+                'force_keyframes_at_cuts': True,
+                'download_ranges': lambda info, __: [{"start_time": start_seconds, "end_time": end_seconds}],
+                'quiet': True,  # Reduce logging
+                'no_warnings': True,  # Reduce warnings
+            }
+        else:
+            ydl_opts = {
+                # Don't filter by format for video to avoid format errors
+                'format': 'best',
+                'outtmpl': os.path.join(temp_dir, f'{filename_base}.%(ext)s'),
+                'force_keyframes_at_cuts': True,
+                'download_ranges': lambda info, __: [{"start_time": start_seconds, "end_time": end_seconds}],
+                'quiet': True,  # Reduce logging
+                'no_warnings': True,  # Reduce warnings
+            }
 
         # Download the segment
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:

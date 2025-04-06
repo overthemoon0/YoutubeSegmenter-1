@@ -1,0 +1,26 @@
+Preview error: 
+Error {}
+
+at t.value (https://086d80c3-47c7-407a-b76e-16f705ed711d-00-yvuk0q36x9j8.pike.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:17465)
+at new t (https://086d80c3-47c7-407a-b76e-16f705ed711d-00-yvuk0q36x9j8.pike.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:12630)
+at t.value (https://086d80c3-47c7-407a-b76e-16f705ed711d-00-yvuk0q36x9j8.pike.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:32766)
+at https://086d80c3-47c7-407a-b76e-16f705ed711d-00-yvuk0q36x9j8.pike.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:34400
+Preview error: 
+Error {}
+message: "[0;31mERROR:[0m [youtube] R_SQB3Qqa3M: Requested format is not available. Use --list-formats for a list of available formats"
+stack: "Error: [0;31mERROR:[0m [youtube] R_SQB3Qqa3M: Requested format is not available. Use --list-formats for a list of available formats↵ at HTMLButtonElement.<anonymous> (https://086d80c3-47c7-407a-b76e-16f705ed711d-00-yvuk0q36x9j8.pike.replit.dev/static/js/app.js:304:23)"
+get stack: ƒ ()
+set stack: ƒ ()
+[[Prototype]]: Object
+
+at t.value (https://086d80c3-47c7-407a-b76e-16f705ed711d-00-yvuk0q36x9j8.pike.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:17465)
+at new t (https://086d80c3-47c7-407a-b76e-16f705ed711d-00-yvuk0q36x9j8.pike.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:12630)
+at t.value (https://086d80c3-47c7-407a-b76e-16f705ed711d-00-yvuk0q36x9j8.pike.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:32766)
+at https://086d80c3-47c7-407a-b76e-16f705ed711d-00-yvuk0q36x9j8.pike.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:34400
+Preview error: 
+Error {}
+
+at t.value (https://086d80c3-47c7-407a-b76e-16f705ed711d-00-yvuk0q36x9j8.pike.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:17465)
+at new t (https://086d80c3-47c7-407a-b76e-16f705ed711d-00-yvuk0q36x9j8.pike.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:12630)
+at t.value (https://086d80c3-47c7-407a-b76e-16f705ed711d-00-yvuk0q36x9j8.pike.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:32766)
+at https://086d80c3-47c7-407a-b76e-16f705ed711d-00-yvuk0q36x9j8.pike.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:34400
